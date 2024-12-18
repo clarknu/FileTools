@@ -26,21 +26,16 @@ public class MinioClient : IFileStorageClient
         return this.internalClient.ListBucketsAsync().Result.Buckets.Select(b => b.Name).ToArray();
     }
 
-    public void ListFiles(string root, string path)
+    public async void ListFiles(string root, string path)
     {
         var args = new ListObjectsArgs()
             .WithBucket(root)
-            .WithPrefix(path)
+            .WithPrefix(null)
             .WithRecursive(true);
-        var observable = this.internalClient.ListObjectsEnumAsync(args);
-        var em = observable.GetAsyncEnumerator();
-
-        while (true)
+        var observable = this.internalClient.ListObjectsEnumAsync(args).ConfigureAwait(false);
+        await foreach (var item in observable)
         {
-            em.MoveNextAsync();
-            if (em.Current is null)
-                break;
-            Console.WriteLine(em.Current.Key);
+            Console.WriteLine(item.Key);
         }
     }
 }
